@@ -7,12 +7,14 @@ def get_logger(name='root'):
         fmt='%(asctime)s [%(levelname)s]: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
     #handler = logging.StreamHandler()
-    handler = logging.FileHandler('log.txt', 'w')
-    handler.setFormatter(formatter)
+
 
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
-    logger.addHandler(handler)
+    if not logger.disabled:
+        handler = logging.FileHandler('log.txt', 'w')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
     return logger
 
 

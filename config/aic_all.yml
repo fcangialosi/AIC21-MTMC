@@ -1,10 +1,26 @@
-CHALLENGE_DATA_DIR: '/home/xxx/AIC21-MTMC/datasets/AIC21_Track3_MTMC_Tracking/'
-DET_SOURCE_DIR: '/home/xxx/AIC21-MTMC/datasets/detection/images/test/S06/'
-DATA_DIR: '/home/xxx/AIC21-MTMC/datasets/detect_merge/'
+CHALLENGE_DATA_DIR: '/home/ubuntu/AIC21-MTMC/datasets/AIC21_Track3_MTMC_Tracking/'
+DET_SOURCE_DIR: '/home/ubuntu/AIC21-MTMC/datasets/detection/images/test/S06/'
+MERGE_DIR: '/home/ubuntu/AIC21-MTMC/datasets/detect_merge/'
+
+
+REID_MODEL1: 'reid_model/resnet101_ibn_a_2.pth'
+REID_BACKBONE1: 'resnet101_ibn_a'
+REID_MODEL2: 'reid_model/resnext101_ibn_a_2.pth'
+REID_BACKBONE2: 'resnext101_ibn_a'
+REID_MODEL3: 'reid_model/resnet101_ibn_a_3.pth'
+REID_BACKBONE3: 'resnet101_ibn_a'
+
+# DET_IMG_DIR: '/home/ubuntu/AIC21-MTMC/datasets/detect_merge/'
+DATA_DIR: '/home/ubuntu/AIC21-MTMC/datasets/'
+
 REID_SIZE_TEST: [384, 384]    # 384, 256
-ROI_DIR: '/home/xxx/AIC21-MTMC/datasets/AIC21_Track3_MTMC_Tracking/test/S06/'
-CID_BIAS_DIR: '/home/xxx/AIC21-MTMC/datasets/AIC21_Track3_MTMC_Tracking/cam_timestamp/'
+ROI_DIR: '/home/ubuntu/AIC21-MTMC/datasets/AIC21_Track3_MTMC_Tracking/test/S06/'
+CID_BIAS_DIR: '/home/ubuntu/AIC21-MTMC/datasets/AIC21_Track3_MTMC_Tracking/cam_timestamp/'
 USE_RERANK: True
 USE_FF: True
 SCORE_THR: 0.1
-MCMT_OUTPUT_TXT: 'track3.txt'
+FPS: 10
+NUM_SECONDS: 180
+CAMS: ['c041', 'c042', 'c043', 'c044', 'c045', 'c046']
+
+MCMT_OUTPUT_TXT: '/home/ubuntu/AIC21-MTMC/datasets/final-res.txt'

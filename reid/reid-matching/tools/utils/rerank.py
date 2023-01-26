@@ -52,6 +52,8 @@ def batch_torch_topk(qf, gf, k1, N=6000):
     m = qf.shape[0]
     n = gf.shape[0]
 
+    k1=8
+    print("trying k1=",k1)
     dist_mat = []
     initial_rank = []
     for j in range(n // N + 1):
@@ -64,6 +66,7 @@ def batch_torch_topk(qf, gf, k1, N=6000):
         temp_qd = torch.cat(temp_qd, dim=0)
         temp_qd = temp_qd / (torch.max(temp_qd, dim=0)[0])
         temp_qd = temp_qd.t()
+        print("size=",temp_qd.size())
         initial_rank.append(torch.topk(temp_qd, k=k1, dim=1, largest=False, sorted=True)[1])
 
     del temp_qd

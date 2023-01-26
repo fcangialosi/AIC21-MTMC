@@ -14,6 +14,10 @@ def preprocess(src_root, dst_root):
         os.makedirs(dst_root)
         print("{} made".format(dst_root))
 
+
+    max_frames = cfg.FPS * cfg.NUM_SECONDS
+
+    # TODO generalize this
     sec_dir_list = ['test']
     dst_dir_list = [ dst_root + '/images/' + i for i in sec_dir_list]
     for i in dst_dir_list:
@@ -28,7 +32,8 @@ def preprocess(src_root, dst_root):
                     y_path = os.path.join(x_path,y)
                     for z in os.listdir(y_path):
                         z_path = os.path.join(y_path,z)
-                        if z.startswith('c'):
+                        if z.startswith('c') and z in cfg.CAMS:
+                            # TODO roi 
                             video_path = os.path.join(z_path,'vdo.avi')
                             roi_path = os.path.join(z_path, 'roi.jpg')
                             ignor_region = cv2.imread(roi_path)
@@ -41,7 +46,7 @@ def preprocess(src_root, dst_root):
                             video = cv2.VideoCapture(video_path)
                             frame_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
                             frame_current = 0
-                            while frame_current<frame_count-1:
+                            while frame_current<min(frame_count,max_frames)-1:
                                 frame_current = int(video.get(cv2.CAP_PROP_POS_FRAMES))
                                 _, frame = video.read()
                                 dst_f =  'img{:06d}.jpg'.format(frame_current)

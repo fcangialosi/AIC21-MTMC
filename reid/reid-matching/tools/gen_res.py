@@ -25,30 +25,33 @@ def show_res(map_tid):
     for cid_tid in map_tid:
         iid = map_tid[cid_tid]
         if iid in show_dict:
-            show_dict[iid].append(cid_tid)
+           show_dict[iid].append(cid_tid)
         else:
             show_dict[iid] = [cid_tid]
     for i in show_dict:
         print('ID{}:{}'.format(i,show_dict[i]))
 
-if __name__ == '__main__':
-    cfg.merge_from_file(f'../../../config/{sys.argv[1]}')
-    cfg.freeze()
-    data_dir = cfg.DATA_DIR
+def gen_res(cfg, data_dir, out_txt, seqs=None):
     roi_dir = cfg.ROI_DIR
 
-    map_tid = pickle.load(open('test_cluster.pkl', 'rb'))['cluster']
+    cluster_path = os.path.join(data_dir, 'test_cluster.pkl')
+    map_tid = pickle.load(open(cluster_path, 'rb'))['cluster']
     show_res(map_tid)
-    f_w = open(cfg.MCMT_OUTPUT_TXT, 'w')
-    cam_paths = os.listdir(data_dir)
-    cam_paths = list(filter(lambda x: 'c' in x, cam_paths))
+    f_w = open(out_txt, 'w')
+    if seqs:
+        cam_paths = seqs
+    else:
+        cam_paths = os.listdir(data_dir)
+        cam_paths = list(filter(lambda x: 'c' in x, cam_paths))
     cam_paths.sort()
+
     for cam_path in cam_paths:
-        cid = int(cam_path.split('.')[0][-3:])
+        print(cam_path)
+        cid = int(cam_path.split('.')[0][1:4])
         
-        roi = cv2.imread(opj(roi_dir, '{}/roi.jpg'.format(cam_path.split('.')[0][-4:])), 0)
+        roi = cv2.imread(opj(roi_dir, '{}/roi.jpg'.format(cam_path.split('.')[0][:4])), 0)
         height, width = roi.shape
-        img_rects = parse_pt(opj(data_dir, cam_path,'{}_mot_feat_break.pkl'.format(cam_path)))
+        img_rects = parse_pt(opj(data_dir,'{}_mot_feat_break.pkl'.format(cam_path)))
         for fid in img_rects:
             tid_rects = img_rects[fid]
             fid = int(fid)+1
@@ -76,3 +79,12 @@ if __name__ == '__main__':
                     new_tid = map_tid[(cid, tid)]
                     f_w.write(str(cid) + ' ' + str(new_tid) + ' ' + str(fid) + ' ' + ' '.join(map(str, new_rect)) + ' -1 -1' '\n')
     f_w.close()
+
+
+if __name__ == '__main__':
+    cfg.merge_from_file(f'../../../config/{sys.argv[1]}')
+    cfg.freeze()
+
+    data_dir = os.path.join(cfg.DATA_DIR, cfg.TRACKING_DIR)
+
+    gen_res(cfg, data_dir, cfg.MCMT_OUTPUT_TXT)

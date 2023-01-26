@@ -64,7 +64,7 @@ def viz_mcmt(args,cam,cam_track):
     if not os.path.isdir(img_dir):
         os.makedirs(img_dir)
     out = cv2.VideoWriter(os.path.join(out_dit,"c0{}.mp4".format(cam)),
-                          cv2.VideoWriter_fourcc(*"mp4v"), 25.0, (1920, 1080))
+                          cv2.VideoWriter_fourcc(*"mp4v"), 10.0, (1920, 1080))
     fr_id = 0
     state,im = cap.read()
     while (state):
@@ -74,11 +74,11 @@ def viz_mcmt(args,cam,cam_track):
             for pid,x,y,w,h in cam_track[fr_id]:
                 bbox_xyxy.append([x, y, x + w, y + h])
                 pids.append(pid)
-                img_dir_out = os.path.join(img_dir,'{}'.format(pid))
-                if not os.path.isdir(img_dir_out):
-                    os.makedirs(img_dir_out)
-                clip = im[y:(y+h),x:(x+w)]
-                cv2.imwrite(os.path.join(img_dir_out,'c0{}_{}_{}.jpg'.format(cam,pid,fr_id)),clip)
+                # img_dir_out = os.path.join(img_dir,'{}'.format(pid))
+                # if not os.path.isdir(img_dir_out):
+                #     os.makedirs(img_dir_out)
+                # clip = im[y:(y+h),x:(x+w)]
+                # cv2.imwrite(os.path.join(img_dir_out,'c0{}_{}_{}.jpg'.format(cam,pid,fr_id)),clip)
 
             im = draw_bboxes(im, bbox_xyxy, pids)
             cv2.putText(im, "%d" % (fr_id), (0, 50),
@@ -131,5 +131,5 @@ if __name__ == "__main__":
     cfg.freeze()
     args.data_path = cfg.CHALLENGE_DATA_DIR
     args.output_path = '../../../exp/viz'
-    args.mot_path = cfg.DATA_DIR
+    args.mot_path = os.path.join(cfg.DATA_DIR, cfg.TRACKING_DIR)
     main(args)

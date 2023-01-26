@@ -1,5 +1,6 @@
 import numpy as np
 import os
+from tqdm import tqdm
 
 INFTY_COST = 1e+5
 BBOX_X = 400
@@ -50,12 +51,12 @@ def reid_similarity(det1, det2, start_cols):
     avg_feat2 = np.mean(feat2, axis=0)
     return cosine_similarity(avg_feat1, avg_feat2)
 
-def associate(det, threshold, start_cols, seq):
+def associate(det, threshold, start_cols, seq, exp_dir):
     #processed_track_list = []
     tids = np.unique(det[:, 1])
     cost_m = np.ones( (len(tids), len(tids))) * threshold
     edges = []
-    for i in range(len(tids) - 1):
+    for i in tqdm(range(len(tids) - 1)):
         trk_i = det[det[:, 1] == tids[i]]
         # image_ids_i = trk_i[:, 0]
         # ignore len 1 track
@@ -72,17 +73,26 @@ def associate(det, threshold, start_cols, seq):
                     edges.append([i, j, similarity])
                 #     match[tids[j]] =  tids[i]
                 #     processed_track_list.append(j)
-    if not os.path.exists('./cache/'):
-        os.makedirs('./cache/')
-    of = open(f'./cache/{seq}_PA_cost.txt', 'w')
+
+    if exp_dir and os.path.exists(exp_dir):
+        cache_base = exp_dir
+    else:
+        cache_base = "."
+    cache_dir = os.path.join(cache_base, "cache")
+
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
+    pa_cost = os.path.join(cache_dir, f"{seq}_PA_cost.txt")
+    pa_res = os.path.join(cache_dir, f"{seq}_PA_res.txt")
+    of = open(pa_cost, 'w')
     print(len(tids), file=of)
     print(len(edges), file=of)
     for edge in edges:
         print(edge[0], edge[1], edge[2], file=of)
     of.close()
     print('generating input graph for solving min cost perfect matching problem.')
-    os.system(f'./MinCostPerfMatch/example -f ./cache/{seq}_PA_cost.txt --max > ./cache/{seq}_PA_res.txt')
-    matches = np.loadtxt(f'./cache/{seq}_PA_res.txt', dtype=int, delimiter=' ')
+    os.system(f'./MinCostPerfMatch/example -f {pa_cost} --max > {pa_res}')
+    matches = np.loadtxt(pa_res, dtype=int, delimiter=' ')
     print(f'in this stage of PA, get matched tracklets {len(matches)}')
     if len(matches) != 0:
         if len(matches.shape) == 1: matches = np.array([matches,])

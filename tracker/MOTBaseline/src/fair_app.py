@@ -17,6 +17,8 @@ import sys
 sys.path.append('../../../')
 from config import cfg
 
+from tqdm import tqdm
+
 def gather_sequence_info(sequence_dir, detection_file, max_frame):
     """Gather sequence information, such as image filenames, detections,
     groundtruth (if available).
@@ -144,9 +146,10 @@ def create_detections(detection_mat, frame_idx, min_height=0):
     return detection_list
 
 
-def run(sequence_dir, detection_file, output_file, min_confidence,
+def run(sequence_dir, detection_file, output_file, pkl_base_dir,
+        min_confidence,
         nms_max_overlap, min_detection_height, max_cosine_distance,
-        display, max_frame_idx, mcmt_cfg):
+        display, max_frame_idx, min_box_area, mcmt_cfg, frame_filter=None):
     """Run multi-target tracker on a particular sequence.
 
     Parameters
@@ -209,36 +212,48 @@ def run(sequence_dir, detection_file, output_file, min_confidence,
             feature = t.features[-1]
             #vertical = tlwh[2] / tlwh[3] > 1.6
             feature = t.smooth_feat
-            if tlwh[2] * tlwh[3] > args.min_box_area:
+            if tlwh[2] * tlwh[3] > min_box_area:
                 results.append([
                     frame_idx, tid, tlwh[0], tlwh[1], tlwh[2], tlwh[3], score, feature
                 ])
 
     # Run tracker.
+    print("> [track] tracking...")
     if display:
         visualizer = visualization.Visualization(seq_info, update_ms=5)
+    elif frame_filter:
+        visualizer = visualization.FilteredFrames(seq_info, frame_filter)
     else:
         visualizer = visualization.NoVisualization(seq_info)
+
     visualizer.run(frame_callback)
 
     # Store results.
-    save_pickle(output_file, results, seq_info['sequence_name'], mcmt_cfg)
-    f = open(output_file, 'w')
-    for row in results:
-        feat = row[-1]
-        feat_str = ','.join([str(fe) for fe in feat])
-        # frame_idx, tid, t, l, w, h, score, feature
-        # print('%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,-1,-1,-1,%s' % (
-        #      row[0], row[1], row[2], row[3], row[4], row[5], row[6], feat_str),file=f)
-        print('%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,-1,-1,-1' % (
-           row[0], row[1], row[2], row[3], row[4], row[5], row[6]),file=f)
 
-def save_pickle(output_file, results, sequence_name, mcmt_cfg):
+    print("> [track] saving pickle...")
+    save_pickle(pkl_base_dir, results, seq_info['sequence_name'], mcmt_cfg)
+    if not output_file:
+        print("> [track] skipping txt output!")
+    else:
+        base_dir = os.path.dirname(output_file)
+        if not os.path.exists(base_dir):
+            os.makedirs(base_dir)
+        f = open(output_file, 'w')
+        for row in tqdm(results):
+            feat = row[-1]
+            feat_str = ','.join([str(fe) for fe in feat])
+            # frame_idx, tid, t, l, w, h, score, feature
+            # print('%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,-1,-1,-1,%s' % (
+            #      row[0], row[1], row[2], row[3], row[4], row[5], row[6], feat_str),file=f)
+            print('%d,%d,%.2f,%.2f,%.2f,%.2f,%.2f,-1,-1,-1' % (
+               row[0], row[1], row[2], row[3], row[4], row[5], row[6]),file=f)
+
+def save_pickle(pkl_base_dir, results, sequence_name, mcmt_cfg):
     """Save pickle."""
 
     # if not os.path.exists(mot_image_dir):
     #     os.makedirs(mot_image_dir)
-    feat_pkl_file = f'{mcmt_cfg.DATA_DIR}/{sequence_name}/{sequence_name}_mot_feat_raw.pkl'
+    feat_pkl_file = os.path.join(pkl_base_dir, sequence_name + '_mot_feat_raw.pkl')
     mot_feat_dic = {}
     for row in results:
         [fid, pid, x, y, w, h] = row[:6]    # pylint: disable=invalid-name
@@ -290,7 +305,7 @@ def parse_args():
     parser.add_argument(
         "--display", help="Show intermediate tracking results",
         default=True, type=bool_string)
-    parser.add_argument('--min-box-area', type=float, default=50, help='filter out tiny boxes')
+    parser.add_argument('--min_box_area', type=float, default=50, help='filter out tiny boxes')
     parser.add_argument('--cfg_file', default='aic_mcmt.yml', help='Config file for mcmt')
     parser.add_argument('--seq_name', default='c041', help='Seq name')
     return parser.parse_args()
@@ -301,12 +316,14 @@ if __name__ == "__main__":
     cfg.merge_from_file(f'../../../config/{args.cfg_file}')
     cfg.freeze()
     args.sequence_dir = os.path.join(cfg.DET_SOURCE_DIR, args.seq_name)
-    args.detection_file = os.path.join(cfg.DATA_DIR, args.seq_name,
+    args.detection_file = os.path.join(cfg.DATA_DIR, 'detect_merge', args.seq_name,
                                        f'{args.seq_name}_dets_feat.pkl')
-    args.output_file = os.path.join(cfg.DATA_DIR, args.seq_name,
+    args.output_file = os.path.join(cfg.DATA_DIR, cfg.TRACKING_DIR, args.seq_name,
                                     f'{args.seq_name}_mot.txt')
 
+    pkl_base_dir = os.path.join(cfg.DATA_DIR, cfg.TRACKING_DIR, args.sequence_dir)
+
     run(
-        args.sequence_dir, args.detection_file, args.output_file,
+        args.sequence_dir, args.detection_file, args.output_file, pkl_base_dir,
         args.min_confidence, args.nms_max_overlap, args.min_detection_height,
-        args.max_cosine_distance, args.display, args.max_frame_idx, cfg)
+        args.max_cosine_distance, args.display, args.max_frame_idx, args.min_box_area, cfg)

@@ -132,17 +132,16 @@ def get_labels(_cfg, cid_tid_dict, cid_tids, score_thr):
     # labels = get_match(cluster_labels)
     return labels
 
-if __name__ == '__main__':
-    cfg.merge_from_file(f'../../../config/{sys.argv[1]}')
-    cfg.freeze()
-    scene_name = ['S06']
-    scene_cluster = [[41, 42, 43, 44, 45, 46]]
-    fea_dir = './exp/viz/test/S06/trajectory/'
+def sub_cluster(cfg, scene_name, feat_dir):
     cid_tid_dict = dict()
+    scene_cluster = [[41, 42, 43, 44, 45, 46]]
 
-    for pkl_path in os.listdir(fea_dir):
-        cid = int(pkl_path.split('.')[0][-3:])
-        with open(opj(fea_dir, pkl_path),'rb') as f:
+    for pkl_path in os.listdir(feat_dir):
+        print(f"[cluster] {pkl_path}")
+        if not "traj" in pkl_path:
+            continue
+        cid = int(pkl_path.split('.')[0][1:4])
+        with open(opj(feat_dir, pkl_path),'rb') as f:
             lines = pickle.load(f)
         for line in lines:
             tracklet = lines[line]
@@ -167,4 +166,14 @@ if __name__ == '__main__':
     for i, c_list in enumerate(all_clu):
         for c in c_list:
             cid_tid_label[c] = i + 1
-    pickle.dump({'cluster': cid_tid_label}, open('test_cluster.pkl', 'wb'))
+    cluster_path = os.path.join(feat_dir, 'test_cluster.pkl')
+    pickle.dump({'cluster': cid_tid_label}, open(cluster_path, 'wb'))
+
+if __name__ == '__main__':
+    cfg.merge_from_file(f'../../../config/{sys.argv[1]}')
+    cfg.freeze()
+    scene_name = ['S06']
+    feat_dir = './exp/viz/test/S06/trajectory/'
+
+    sub_cluster(cfg, scene_name, feat_dir)
+

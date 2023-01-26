@@ -82,6 +82,33 @@ class NoVisualization(object):
             frame_callback(self, frame_idx)
             self.frame_idx += 1
 
+class FilteredFrames(object):
+
+    def __init__(self, seq_info, frame_filter):
+        self.frame_idx = seq_info["min_frame_idx"]
+        self.last_idx = seq_info["max_frame_idx"]
+        self.frame_filter = frame_filter
+
+    def set_image(self, image):
+        pass
+
+    def draw_groundtruth(self, track_ids, boxes):
+        pass
+
+    def draw_detections(self, detections):
+        pass
+
+    def draw_trackers(self, trackers):
+        pass
+
+    def run(self, frame_callback):
+        #while self.frame_idx <= self.last_idx:
+        start_frame = self.frame_idx
+        for frame_idx in tqdm(range(start_frame, self.last_idx+1)):
+            if frame_idx in self.frame_filter:
+                frame_callback(self, frame_idx)
+            self.frame_idx += 1
+
 
 class Visualization(object):
     """

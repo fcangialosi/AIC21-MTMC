@@ -44,27 +44,27 @@ def out_new_mot(mot_list,mot_path):
             out_dict[tracklet[f]['imgname']]=tracklet[f]
     pickle.dump(out_dict,open(mot_path,'wb'))
 
-if __name__ == '__main__':
-    cfg.merge_from_file(f'../../../config/{sys.argv[1]}')
-    cfg.freeze()
-    scene_name = ['S06']
-    data_dir = cfg.DATA_DIR
-    save_dir = './exp/viz/test/S06/trajectory/'
+def trajectory_fusion(cfg, scene_name, seqs, data_dir, save_dir):
     cid_bias = parse_bias(cfg.CID_BIAS_DIR, scene_name)
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
-    cam_paths = os.listdir(data_dir)
-    cam_paths = list(filter(lambda x: 'c' in x, cam_paths))
+    if seqs:
+        cam_paths = seqs
+    else:
+        cam_paths = os.listdir(data_dir)
+        cam_paths = list(filter(lambda x: 'c' in x, cam_paths))
     cam_paths.sort()
     zones = zone()
 
     for cam_path in cam_paths:
-        print('processing {}...'.format(cam_path))
+        print('[fusion] processing {}...'.format(cam_path))
         cid = int(cam_path[-3:])
-        f_w = open(opj(save_dir, '{}.pkl'.format(cam_path)), 'wb')
+        f_w = open(opj(save_dir, '{}_traj.pkl'.format(cam_path)), 'wb')
         cur_bias = cid_bias[cid]
-        mot_path = opj(data_dir, cam_path,'{}_mot_feat.pkl'.format(cam_path))
-        new_mot_path = opj(data_dir, cam_path, '{}_mot_feat_break.pkl'.format(cam_path))
+        # mot_path = opj(data_dir, cam_path,'{}_mot_feat.pkl'.format(cam_path))
+        # new_mot_path = opj(data_dir, cam_path, '{}_mot_feat_break.pkl'.format(cam_path))
+        mot_path = opj(data_dir, '{}_mot_feat.pkl'.format(cam_path))
+        new_mot_path = opj(data_dir, '{}_mot_feat_break.pkl'.format(cam_path))
         print(new_mot_path)
         zones.set_cam(cid)
         mot_list = parse_pt(mot_path,zones)
@@ -105,3 +105,12 @@ if __name__ == '__main__':
 
         pickle.dump(tid_data,f_w)
         f_w.close()
+
+if __name__ == '__main__':
+    cfg.merge_from_file(f'../../../config/{sys.argv[1]}')
+    cfg.freeze()
+    scene_name = ['S06']
+    save_dir = './exp/viz/test/S06/trajectory/'
+    data_dir = os.path.join(cfg.DATA_DIR, cfg.TRACKING_DIR)
+    trajectory_fusion(cfg, scene_name, None, data_dir, save_dir)
+    
